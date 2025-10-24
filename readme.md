@@ -1,0 +1,21 @@
+# CSC2114 AI ASSIGNMENT
+
+## Project Details
+
+**Project Title:** Diffusion-Based Large Vision Models for Contextual Event Promotion and Engagement.
+
+**Group Code:** SW-AI-46
+
+**Keywords**: Large Vision Models (LVM), Diffusion-Based Image Generation, Event Management and Mobilization, AI Storytelling and Narration, Immersive Virtual Event Tours
+
+**Abstract**:
+
+**Supervisor**: Ggaliwango Marvin
+
+### Team Members
+
+| Name                | Student Number | Registration Number | Student Email                                                                           | University Affiliation |
+| ------------------- | -------------- | ------------------- | --------------------------------------------------------------------------------------- | ---------------------- |
+| Beingana Jim Junior | 2200705243     | 22/X/5243/PS        | [beingana.jim.junior@students.mak.ac.ug](mailto:beingana.jim.junior@students.mak.ac.ug) | Makerere University    |
+| Simon Peter Mujuni  | 1900708714     | 19/U/8714/EVE       | [simon.mujuni@students.mak.ac.ug](mailto:simon.mujuni@students.mak.ac.ug)               | Makerere University    |
+| Boonabaana Bronia   | 2300707647     | 23/U/07647/EVE      | [boonabaana.bronia@students.mac.ac.ug](mailto:boonabaana.bronia@students.mac.ac.ug)     | Makerere University    |
