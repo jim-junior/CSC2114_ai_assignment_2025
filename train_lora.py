@@ -19,6 +19,7 @@ from torch.utils.data import Dataset, DataLoader
 MODEL_NAME = "runwayml/stable-diffusion-v1-5"
 # Should contain images and a metadata.csv
 TRAIN_DATA_DIR = "/content/drive/MyDrive/AI_DATASET"
+METADATA_FILE_PATH = "/content/scripts/metadata.csv"
 OUTPUT_DIR = "/content/output"
 CAPTION_COLUMN = "caption"
 MAX_TRAIN_STEPS = 10
@@ -50,7 +51,7 @@ class CaptionDataset(Dataset):
         self.resolution = resolution
 
         # Prefer metadata.csv inside the data_root (matches your images).
-        self.metadata_path = os.path.join(self.data_root, "metadata.csv")
+        self.metadata_path = METADATA_FILE_PATH
 
         if not os.path.exists(self.metadata_path):
             print("WARNING: metadata.csv not found in data_root. Using placeholder data!")
