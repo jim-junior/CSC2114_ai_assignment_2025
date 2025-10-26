@@ -225,8 +225,8 @@ def train_lora():
     )
 
     # 5. Prepare with Accelerator (Crucial step for multi-GPU/mixed precision)
-    unet, optimizer, train_dataloader, lr_scheduler = accelerator.prepare(
-        unet, optimizer, train_dataloader, lr_scheduler
+    unet, text_encoder, vae, optimizer, train_dataloader, lr_scheduler = accelerator.prepare(
+        unet, text_encoder, vae, optimizer, train_dataloader, lr_scheduler
     )
 
     # --- FIX 1: Move non-trainable components to the GPU ---
@@ -261,8 +261,14 @@ def train_lora():
             # --- FIX 2: Move input_ids to the GPU before encoding ---
             # Input IDs are on CPU from the DataLoader; move them to GPU
             # where the text_encoder is now located.
-            input_ids = batch["input_ids"].to(accelerator.device)
-            encoder_hidden_states = text_encoder(input_ids)[0]
+            for k, v in batch.items():
+                if isinstance(v, torch.Tensor):
+                    batch[k] = v.to(accelerator.device)
+
+            # Now safe to call text_encoder
+            # encoder_hidden_states = text_encoder(batch["input_ids"])[0]
+            # input_ids = batch["input_ids"].to(accelerator.device)
+            encoder_hidden_states = text_encoder(batch["input_ids"])[0]
             # --------------------------------------------------------
 
             # VAE encode the images to latent space
