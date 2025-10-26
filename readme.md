@@ -16,6 +16,9 @@
 
 **Hugggingface Model**: [https://huggingface.co/jimjunior/event-diffusion-model](https://huggingface.co/jimjunior/event-diffusion-model)
 
+
+**Dataset**: [https://drive.google.com/drive/folders/1zxLxcOBOkCarm8e3jXcamj1Tkk7fb271?usp=sharing](https://drive.google.com/drive/folders/1zxLxcOBOkCarm8e3jXcamj1Tkk7fb271?usp=sharing)
+
 ### Team Members
 
 | Name                | Student Number | Registration Number | Student Email                                                                           | University Affiliation |
