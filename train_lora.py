@@ -246,6 +246,7 @@ def train_lora():
     accelerator.print(f"  Total training steps = {MAX_TRAIN_STEPS}")
 
     # Start training
+    # Start training
     global_step = 0
     progress_bar = tqdm(
         range(MAX_TRAIN_STEPS),
@@ -258,41 +259,34 @@ def train_lora():
             break
 
         with accelerator.accumulate(unet):
-            # --- FIX 2: Move input_ids to the GPU before encoding ---
-            # Input IDs are on CPU from the DataLoader; move them to GPU
-            # where the text_encoder is now located.
+            # Defensive: ensure tensors are on the accelerator device
             for k, v in batch.items():
                 if isinstance(v, torch.Tensor):
                     batch[k] = v.to(accelerator.device)
 
-            # Now safe to call text_encoder
-            # encoder_hidden_states = text_encoder(batch["input_ids"])[0]
-            # input_ids = batch["input_ids"].to(accelerator.device)
+            # Encode text (get text embeddings)
             encoder_hidden_states = text_encoder(batch["input_ids"])[0]
-            # --------------------------------------------------------
 
             # VAE encode the images to latent space
             latents = vae.encode(batch["pixel_values"].to(
                 unet.dtype)).latent_dist.sample()
             latents = latents * vae.config.scaling_factor
 
-            # Sample noise to add to the latents
+            # Sample noise and timesteps
             noise = torch.randn_like(latents)
             bsz = latents.shape[0]
-
-            # Sample a random timestep for each image
             timesteps = torch.randint(
-                0, noise_scheduler.config.num_train_timesteps, (bsz,), device=latents.device).long()
+                0, noise_scheduler.config.num_train_timesteps, (bsz,), device=latents.device
+            ).long()
 
-            # Add noise to the latents according to the noise magnitude at each timestep (forward diffusion process)
             noisy_latents = noise_scheduler.add_noise(
                 latents, noise, timesteps)
 
-            # Predict the noise residual
+            # Predict noise residual
             model_pred = unet(noisy_latents, timesteps,
                               encoder_hidden_states).sample
 
-            # Get the target for loss depending on the prediction type
+            # Get target
             if noise_scheduler.config.prediction_type == "epsilon":
                 target = noise
             elif noise_scheduler.config.prediction_type == "v_prediction":
@@ -302,17 +296,20 @@ def train_lora():
                 raise ValueError(
                     f"Unknown prediction type {noise_scheduler.config.prediction_type}")
 
-            # Calculate loss
+            # Compute loss and backward
             loss = F.mse_loss(model_pred.float(),
                               target.float(), reduction="mean")
-
-            # Backpropagate and update weights
             accelerator.backward(loss)
-            accelerator.clip_grad_norm_(unet.parameters(), 1.0)
-            optimizer.step()
-            lr_scheduler.step()
-            optimizer.zero_grad()
 
+            # ONLY unscale/clip/step when gradients are synced (accumulation boundary)
+            if accelerator.sync_gradients:
+                # unscale is performed internally by clip_grad_norm_ when necessary
+                accelerator.clip_grad_norm_(unet.parameters(), 1.0)
+                optimizer.step()
+                lr_scheduler.step()
+                optimizer.zero_grad()
+
+        # update progress / logging outside accumulate
         if accelerator.sync_gradients:
             progress_bar.update(1)
             global_step += 1
