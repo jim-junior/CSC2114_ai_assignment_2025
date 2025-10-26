@@ -12,7 +12,9 @@
 
 **Supervisor**: [Ggaliwango Marvin](https://www.linkedin.com/in/ggaliwango-marvin-1515b7122/)
 
-**Colab Notebook**: [https://colab.research.google.com/drive/12XoKymFMbyozgSJ1tzb3ATDQTZ2Y3qr4?usp=sharing](https://colab.research.google.com/drive/12XoKymFMbyozgSJ1tzb3ATDQTZ2Y3qr4?usp=sharing)
+**Model Training Notebook(Google Colab)**: [https://colab.research.google.com/drive/12XoKymFMbyozgSJ1tzb3ATDQTZ2Y3qr4?usp=sharing](https://colab.research.google.com/drive/12XoKymFMbyozgSJ1tzb3ATDQTZ2Y3qr4?usp=sharing)
+
+**Inference Notebook(Kaggle)**: [https://www.kaggle.com/code/jimjunior/sw-ai-46-event-model-inference](https://www.kaggle.com/code/jimjunior/sw-ai-46-event-model-inference)
 
 **Hugggingface Model**: [https://huggingface.co/jimjunior/event-diffusion-model](https://huggingface.co/jimjunior/event-diffusion-model)
 
