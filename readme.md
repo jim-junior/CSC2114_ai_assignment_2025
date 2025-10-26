@@ -10,7 +10,11 @@
 
 **Abstract**:
 
-**Supervisor**: Ggaliwango Marvin
+**Supervisor**: [Ggaliwango Marvin](https://www.linkedin.com/in/ggaliwango-marvin-1515b7122/)
+
+**Colab Notebook**: [https://colab.research.google.com/drive/12XoKymFMbyozgSJ1tzb3ATDQTZ2Y3qr4?usp=sharing](https://colab.research.google.com/drive/12XoKymFMbyozgSJ1tzb3ATDQTZ2Y3qr4?usp=sharing)
+
+**Hugggingface Model**: [https://huggingface.co/jimjunior/event-diffusion-model](https://huggingface.co/jimjunior/event-diffusion-model)
 
 ### Team Members
 
