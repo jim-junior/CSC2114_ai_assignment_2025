@@ -229,6 +229,13 @@ def train_lora():
         unet, optimizer, train_dataloader, lr_scheduler
     )
 
+    # --- FIX 1: Move non-trainable components to the GPU ---
+    # The VAE and Text Encoder are not passed to accelerator.prepare, so they
+    # must be explicitly moved to the device determined by the Accelerator.
+    text_encoder.to(accelerator.device)
+    vae.to(accelerator.device)
+    # --------------------------------------------------------
+
     # 6. Training Loop
     total_batch_size = BATCH_SIZE * accelerator.num_processes * \
         accelerator.gradient_accumulation_steps
@@ -251,8 +258,12 @@ def train_lora():
             break
 
         with accelerator.accumulate(unet):
-            # Encode text (get text embeddings)
-            encoder_hidden_states = text_encoder(batch["input_ids"])[0]
+            # --- FIX 2: Move input_ids to the GPU before encoding ---
+            # Input IDs are on CPU from the DataLoader; move them to GPU
+            # where the text_encoder is now located.
+            input_ids = batch["input_ids"].to(accelerator.device)
+            encoder_hidden_states = text_encoder(input_ids)[0]
+            # --------------------------------------------------------
 
             # VAE encode the images to latent space
             latents = vae.encode(batch["pixel_values"].to(
