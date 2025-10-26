@@ -91,7 +91,7 @@ class CaptionDataset(Dataset):
             except Exception as e:
                 # Handle missing/corrupt image, use a black tensor and log the issue
                 print(
-                    f"Error loading image {self.metadata.iloc[idx]['file_name']}: {e}")
+                    f"Error loading image {self.metadata.iloc[idx]['name']}: {e}")
                 image = torch.zeros(
                     (3, self.resolution, self.resolution), dtype=torch.float32)
 
