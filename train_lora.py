@@ -21,7 +21,7 @@ MODEL_NAME = "runwayml/stable-diffusion-v1-5"
 TRAIN_DATA_DIR = "/content/drive/MyDrive/AI_DATASET"
 OUTPUT_DIR = "/output"
 CAPTION_COLUMN = "caption"
-MAX_TRAIN_STEPS = 1000
+MAX_TRAIN_STEPS = 20
 LEARNING_RATE = 1e-4
 LORA_RANK = 64
 RESOLUTION = 512
@@ -32,32 +32,71 @@ BATCH_SIZE = 1  # Per device batch size
 
 class CaptionDataset(Dataset):
     """
-    A custom PyTorch Dataset class to load images and captions based on a metadata CSV.
-    The CSV is expected to be in the TRAIN_DATA_DIR.
+    Loads metadata from <data_root>/metadata.csv and filters out entries
+    whose image files do not exist on disk. Returns dicts with:
+      - "pixel_values": tensor shape (3, resolution, resolution), values in [-1, 1]
+      - "input_ids": tokenized caption (torch.LongTensor)
+
+    Expects CSV columns:
+      - 'name' : filename of the image (will be joined with data_root)
+      - CAPTION_COLUMN : caption text
+
+    If metadata.csv is missing, a placeholder small dataset is created.
     """
 
     def __init__(self, data_root, tokenizer, resolution=512):
         self.data_root = data_root
         self.tokenizer = tokenizer
         self.resolution = resolution
-        self.metadata_path = os.path.join(
-            os.path.dirname(__file__), "metadata.csv")
+
+        # Prefer metadata.csv inside the data_root (matches your images).
+        self.metadata_path = os.path.join(self.data_root, "metadata.csv")
 
         if not os.path.exists(self.metadata_path):
-            # Create a placeholder CSV if it doesn't exist for testing,
-            # but warn the user they must replace it with real data.
-            print("WARNING: metadata.csv not found. Using placeholder data!")
+            print("WARNING: metadata.csv not found in data_root. Using placeholder data!")
             self.metadata = pd.DataFrame({
-
-                'name': [f"placeholder_image_{i}.png" for i in range(10)],
+                "name": [f"placeholder_image_{i}.png" for i in range(10)],
                 CAPTION_COLUMN: [
-                    f"a photo of a speaker giving a talk at Pycon Uganda, tag{i}" for i in range(10)]
+                    f"a photo of a speaker giving a talk at Pycon Uganda, tag{i}" for i in range(10)
+                ]
             })
-            self.image_files = []  # Will be empty if real images aren't present
+            self.image_files = []  # no real images
         else:
-            self.metadata = pd.read_csv(self.metadata_path)
-            self.image_files = [os.path.join(
-                self.data_root, f) for f in self.metadata['name'].tolist()]
+            raw_meta = pd.read_csv(self.metadata_path)
+
+            # Clean/normalize filenames (strip whitespace)
+            if "name" not in raw_meta.columns:
+                raise ValueError(
+                    "metadata.csv must contain a 'name' column with image filenames.")
+            raw_meta["name"] = raw_meta["name"].astype(str).str.strip()
+
+            # Build the absolute image paths
+            raw_meta["image_path"] = raw_meta["name"].apply(
+                lambda n: os.path.join(self.data_root, n))
+
+            # Check which files exist
+            raw_meta["exists"] = raw_meta["image_path"].apply(
+                lambda p: os.path.exists(p))
+
+            num_total = len(raw_meta)
+            num_exists = int(raw_meta["exists"].sum())
+            num_missing = num_total - num_exists
+
+            if num_missing > 0:
+                print(
+                    f"Found {num_total} entries in metadata.csv — skipping {num_missing} missing files, keeping {num_exists} entries.")
+
+            # Keep only rows with existing files
+            filtered_meta = raw_meta[raw_meta["exists"]].reset_index(drop=True)
+
+            # If after filtering we end up with zero images, warn but keep dataframe
+            if len(filtered_meta) == 0:
+                print(
+                    "WARNING: No valid image files found in data_root. Dataset will return black placeholder tensors.")
+
+            # Save metadata and image file list
+            self.metadata = filtered_meta
+            self.image_files = filtered_meta["image_path"].tolist()
 
         self.num_samples = len(self.metadata)
 
@@ -65,8 +104,15 @@ class CaptionDataset(Dataset):
         return self.num_samples
 
     def __getitem__(self, idx):
-        # 1. Get Caption
-        caption = self.metadata.iloc[idx][CAPTION_COLUMN]
+        # Safeguard if dataset is empty
+        if self.num_samples == 0:
+            caption = ""
+        else:
+            caption = self.metadata.iloc[idx].get(CAPTION_COLUMN, "")
+            if pd.isna(caption):
+                caption = ""
+
+        # Tokenize caption (ensure we return 1D tensor)
         input_ids = self.tokenizer(
             caption,
             max_length=self.tokenizer.model_max_length,
@@ -75,23 +121,27 @@ class CaptionDataset(Dataset):
             return_tensors="pt"
         ).input_ids.squeeze()
 
-        # 2. Get Image (Placeholder or Actual)
+        # Load image (or placeholder)
         if len(self.image_files) == 0:
-            # If no real images, return a black placeholder tensor
+            # Return black placeholder
             image = torch.zeros(
                 (3, self.resolution, self.resolution), dtype=torch.float32)
         else:
+            image_path = self.image_files[idx]
             try:
-                # Load actual image file
-                image_path = self.image_files[idx]
-                image = Image.open(image_path).convert(
-                    "RGB").resize((self.resolution, self.resolution))
-                image = torch.tensor(image).permute(
-                    2, 0, 1).float() / 127.5 - 1.0  # Normalize to [-1, 1]
+                img = Image.open(image_path).convert("RGB").resize(
+                    (self.resolution, self.resolution))
+                # Convert via numpy to avoid PIL dtype inference problems, then to float tensor
+                import numpy as np
+                # shape (H, W, C), dtype float32 in [0,255]
+                arr = np.array(img).astype(np.float32)
+                # Convert to CHW and normalize to [-1, 1]
+                arr = arr.transpose(2, 0, 1)  # C,H,W
+                tensor = torch.from_numpy(arr) / 127.5 - 1.0
+                image = tensor.to(dtype=torch.float32)
             except Exception as e:
-                # Handle missing/corrupt image, use a black tensor and log the issue
-                print(
-                    f"Error loading image {self.metadata.iloc[idx]['name']}: {e}")
+                # If anything goes wrong (corrupt image etc.), log and return black tensor
+                print(f"Error loading image {image_path}: {e}")
                 image = torch.zeros(
                     (3, self.resolution, self.resolution), dtype=torch.float32)
 
