@@ -18,7 +18,7 @@ from torch.utils.data import Dataset, DataLoader
 # You can change these values here before running the script.
 MODEL_NAME = "runwayml/stable-diffusion-v1-5"
 # Should contain images and a metadata.csv
-TRAIN_DATA_DIR = "/content/my_uganda_speaker_images"
+TRAIN_DATA_DIR = "/content/train_images"
 OUTPUT_DIR = "/output"
 CAPTION_COLUMN = "caption"
 MAX_TRAIN_STEPS = 1000
@@ -40,14 +40,16 @@ class CaptionDataset(Dataset):
         self.data_root = data_root
         self.tokenizer = tokenizer
         self.resolution = resolution
-        self.metadata_path = os.path.join(data_root, "metadata.csv")
+        self.metadata_path = os.path.join(
+            os.path.dirname(__file__), "metadata.csv")
 
         if not os.path.exists(self.metadata_path):
             # Create a placeholder CSV if it doesn't exist for testing,
             # but warn the user they must replace it with real data.
             print("WARNING: metadata.csv not found. Using placeholder data!")
             self.metadata = pd.DataFrame({
-                'file_name': [f"placeholder_image_{i}.png" for i in range(10)],
+
+                'name': [f"placeholder_image_{i}.png" for i in range(10)],
                 CAPTION_COLUMN: [
                     f"a photo of a speaker giving a talk at Pycon Uganda, tag{i}" for i in range(10)]
             })
@@ -55,7 +57,7 @@ class CaptionDataset(Dataset):
         else:
             self.metadata = pd.read_csv(self.metadata_path)
             self.image_files = [os.path.join(
-                self.data_root, f) for f in self.metadata['file_name'].tolist()]
+                self.data_root, f) for f in self.metadata['name'].tolist()]
 
         self.num_samples = len(self.metadata)
 
