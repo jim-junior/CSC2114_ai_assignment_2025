@@ -19,7 +19,7 @@ from torch.utils.data import Dataset, DataLoader
 MODEL_NAME = "runwayml/stable-diffusion-v1-5"
 # Should contain images and a metadata.csv
 TRAIN_DATA_DIR = "/content/drive/MyDrive/AI_DATASET"
-OUTPUT_DIR = "/output"
+OUTPUT_DIR = "/content/output"
 CAPTION_COLUMN = "caption"
 MAX_TRAIN_STEPS = 20
 LEARNING_RATE = 1e-4
