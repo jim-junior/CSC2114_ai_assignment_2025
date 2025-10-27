@@ -21,6 +21,11 @@
 
 **Dataset**: [https://drive.google.com/drive/folders/1zxLxcOBOkCarm8e3jXcamj1Tkk7fb271?usp=sharing](https://drive.google.com/drive/folders/1zxLxcOBOkCarm8e3jXcamj1Tkk7fb271?usp=sharing)
 
+**Application API Docker Image**: `jimjuniorb/event-gen-model`
+
+**Application UI Endpoint**: [https://event-gen.open.ug](https://event-gen.open.ug)
+
+
 ### Team Members
 
 | Name                | Student Number | Registration Number | Student Email                                                                           | University Affiliation |
