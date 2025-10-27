@@ -1,4 +1,5 @@
 from fastapi import FastAPI, BackgroundTasks, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from diffusers import StableDiffusionPipeline
 import torch
@@ -11,6 +12,14 @@ from PIL import Image
 MODEL_PATH = "jimjunior/event-diffusion-model"
 
 app = FastAPI(title="Event Gen API")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],       # ✅ allow all origins
+    allow_credentials=False,   # must be False when allow_origins=["*"]
+    allow_methods=["*"],       # allow all HTTP methods
+    allow_headers=["*"],       # allow all headers
+)
 
 # Load pipeline once at startup
 device = "cuda" if torch.cuda.is_available() else "cpu"
