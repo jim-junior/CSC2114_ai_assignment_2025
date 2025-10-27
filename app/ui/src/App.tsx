@@ -1,35 +1,337 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import React, { useState, useRef, useEffect } from "react";
+import axios from "axios";
+import { FiSend, FiImage, FiTrash2, FiDownload, FiPlus } from "react-icons/fi";
+import { AiOutlineLoading3Quarters } from "react-icons/ai";
 
-function App() {
-  const [count, setCount] = useState(0)
+const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8000";
 
+function ChatBubble({ role, text, image }) {
+  const isUser = role === "user";
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+    <div className={`flex ${isUser ? "justify-end" : "justify-start"} mb-4`}>
+      <div
+        className={`max-w-[78%] p-3 rounded-2xl shadow ${
+          isUser
+            ? "bg-blue-600 text-white rounded-br-none"
+            : "bg-gray-100 text-gray-800 rounded-bl-none"
+        }`}
+      >
+        {text && <div className="whitespace-pre-wrap">{text}</div>}
+        {image && (
+          <div className="mt-3">
+            <img
+              src={image}
+              alt="generated"
+              className="w-full rounded-lg border"
+            />
+          </div>
+        )}
       </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    </div>
+  );
 }
 
-export default App
+export default function App() {
+  const [prompt, setPrompt] = useState("");
+  const [messages, setMessages] = useState(() => {
+    return [
+      {
+        id: 0,
+        role: "bot",
+        text: 'Hi — send a prompt and I\'ll generate an image for you. Try: "a friendly robot painting a sunset"',
+      },
+    ];
+  });
+  const [loading, setLoading] = useState(false);
+  const [steps, setSteps] = useState(28);
+  const [guidance, setGuidance] = useState(7.5);
+  const [width, setWidth] = useState(512);
+  const [height, setHeight] = useState(512);
+  const fileDownloadRef = useRef(null);
+  const containerRef = useRef(null);
+
+  // Auto-scroll on new message
+  useEffect(() => {
+    if (containerRef.current) {
+      containerRef.current.scrollTop = containerRef.current.scrollHeight;
+    }
+  }, [messages, loading]);
+
+  function addMessage(msg) {
+    setMessages((m) => [...m, { ...msg, id: Date.now() }]);
+  }
+
+  async function sendPrompt() {
+    if (!prompt.trim()) return;
+    const text = prompt.trim();
+    addMessage({ role: "user", text });
+    setPrompt("");
+
+    setLoading(true);
+    addMessage({
+      role: "bot",
+      text: "Generating…",
+      _meta: { placeholder: true },
+    });
+
+    try {
+      const payload = {
+        prompt: text,
+        steps,
+        guidance_scale: guidance,
+        width,
+        height,
+      };
+
+      const res = await axios.post(`${API_BASE}/generate`, payload, {
+        timeout: 120000,
+      });
+
+      // normalize response
+      let imageBase64 = null;
+      if (res.data?.image_base64) imageBase64 = res.data.image_base64;
+      else if (res.data?.image_url) {
+        // backend might return a URL
+        imageBase64 = res.data.image_url;
+      } else {
+        // attempt fallback if backend returns raw data
+        imageBase64 = res.data;
+      }
+
+      // remove the last placeholder bot message
+      setMessages((prev) => {
+        const withoutPlaceholder = prev.filter(
+          (m) => !(m.role === "bot" && m._meta && m._meta.placeholder)
+        );
+        return [
+          ...withoutPlaceholder,
+          {
+            role: "bot",
+            image: imageBase64
+              ? imageBase64.startsWith("data:")
+                ? imageBase64
+                : `data:image/png;base64,${imageBase64}`
+              : null,
+            text: null,
+            id: Date.now(),
+          },
+        ];
+      });
+    } catch (err) {
+      console.error(err);
+      setMessages((prev) => {
+        const withoutPlaceholder = prev.filter(
+          (m) => !(m.role === "bot" && m._meta && m._meta.placeholder)
+        );
+        return [
+          ...withoutPlaceholder,
+          {
+            role: "bot",
+            text: `Error: ${
+              err?.response?.data?.detail || err.message || "Request failed"
+            }`,
+          },
+        ];
+      });
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function clearChat() {
+    setMessages([
+      { id: 0, role: "bot", text: "Chat cleared. Send a prompt to begin." },
+    ]);
+  }
+
+  function handleKey(e) {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      sendPrompt();
+    }
+  }
+
+  function downloadImage(base64) {
+    const link = document.createElement("a");
+    link.href = base64;
+    link.download = `sd-${Date.now()}.png`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white flex items-center justify-center p-6">
+      <div className="w-full max-w-3xl bg-white shadow-lg rounded-2xl overflow-hidden border">
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-500 to-violet-500 flex items-center justify-center text-white font-bold">
+              AI
+            </div>
+            <div>
+              <div className="text-lg font-semibold">Stable Diffusion Chat</div>
+              <div className="text-xs text-gray-500">
+                Generate images from prompts — demo UI
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={clearChat}
+              className="flex items-center gap-2 text-sm px-3 py-1 rounded-md hover:bg-gray-100"
+            >
+              <FiTrash2 /> Clear
+            </button>
+          </div>
+        </div>
+
+        {/* Main content */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Chat area */}
+          <div className="md:col-span-2 flex flex-col h-[70vh]">
+            <div ref={containerRef} className="flex-1 p-6 overflow-auto">
+              {messages.map((msg) => (
+                <ChatBubble
+                  key={msg.id}
+                  role={msg.role}
+                  text={msg.text}
+                  image={msg.image}
+                />
+              ))}
+            </div>
+
+            <div className="px-4 py-3 border-t bg-gray-50">
+              <div className="flex items-start gap-3">
+                <textarea
+                  value={prompt}
+                  onChange={(e) => setPrompt(e.target.value)}
+                  onKeyDown={handleKey}
+                  placeholder="Type a prompt... e.g. 'a joyful corgi in a spacesuit, cinematic lighting'"
+                  className="flex-1 min-h-[48px] max-h-36 resize-none p-3 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-300"
+                />
+                <div className="flex flex-col gap-2">
+                  <button
+                    onClick={sendPrompt}
+                    disabled={loading || !prompt.trim()}
+                    className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-60"
+                  >
+                    {loading ? (
+                      <AiOutlineLoading3Quarters className="animate-spin" />
+                    ) : (
+                      <FiSend />
+                    )}{" "}
+                    Send
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Controls / settings */}
+          <div className="md:col-span-1 border-l p-4 bg-slate-50">
+            <div className="flex items-center justify-between mb-3">
+              <div className="font-medium">Generation Settings</div>
+              <div className="text-xs text-gray-500">
+                Adjust for speed/quality
+              </div>
+            </div>
+
+            <div className="mb-3">
+              <label className="block text-sm mb-1">
+                Steps: <span className="font-semibold">{steps}</span>
+              </label>
+              <input
+                type="range"
+                min="8"
+                max="60"
+                value={steps}
+                onChange={(e) => setSteps(Number(e.target.value))}
+                className="w-full"
+              />
+            </div>
+
+            <div className="mb-3">
+              <label className="block text-sm mb-1">
+                Guidance: <span className="font-semibold">{guidance}</span>
+              </label>
+              <input
+                type="range"
+                min="1"
+                max="12"
+                step="0.1"
+                value={guidance}
+                onChange={(e) => setGuidance(Number(e.target.value))}
+                className="w-full"
+              />
+            </div>
+
+            <div className="mb-3 grid grid-cols-2 gap-2">
+              <div>
+                <label className="text-sm block mb-1">Width</label>
+                <select
+                  value={width}
+                  onChange={(e) => setWidth(Number(e.target.value))}
+                  className="w-full p-2 rounded-md border"
+                >
+                  <option value={256}>256</option>
+                  <option value={384}>384</option>
+                  <option value={512}>512</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-sm block mb-1">Height</label>
+                <select
+                  value={height}
+                  onChange={(e) => setHeight(Number(e.target.value))}
+                  className="w-full p-2 rounded-md border"
+                >
+                  <option value={256}>256</option>
+                  <option value={384}>384</option>
+                  <option value={512}>512</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="mt-4">
+              <div className="text-sm font-medium mb-2">Last Image Actions</div>
+              <div className="flex gap-2">
+                <button
+                  className="flex-1 p-2 rounded-md border flex items-center justify-center gap-2"
+                  onClick={() => {
+                    const last = messages
+                      .slice()
+                      .reverse()
+                      .find((m) => m.image);
+                    if (last?.image) downloadImage(last.image);
+                  }}
+                >
+                  <FiDownload /> Download
+                </button>
+
+                <button
+                  className="p-2 rounded-md border flex items-center justify-center"
+                  onClick={() => {
+                    const last = messages
+                      .slice()
+                      .reverse()
+                      .find((m) => m.image);
+                    if (last?.image) navigator.clipboard.writeText(last.image);
+                  }}
+                  title="Copy image data URL"
+                >
+                  <FiPlus />
+                </button>
+              </div>
+            </div>
+
+            <div className="mt-6 text-xs text-gray-500">
+              This is a demo UI for generating images. Keep an eye on backend
+              costs and moderation.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
