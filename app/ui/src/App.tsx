@@ -47,7 +47,7 @@ export default function App() {
       {
         id: 0,
         role: "bot",
-        text: 'Hi — send a prompt and I\'ll generate an image for you. Try: "a friendly robot painting a sunset"',
+        text: 'Hi — send a prompt and I\'ll generate an image for you. Try: "A conference hall of an international event"',
       },
     ];
   });
