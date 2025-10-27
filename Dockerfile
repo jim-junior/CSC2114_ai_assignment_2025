@@ -27,4 +27,4 @@ COPY app/api/app.py /app/app.py
 ENV MODEL_PATH=jimjunior/event-diffusion-model
 EXPOSE 80
 
-CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "80", "--workers", "1"]
+CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "80"]
