@@ -6,8 +6,6 @@ import axios from "axios";
 import { FiSend, FiTrash2, FiDownload, FiPlus } from "react-icons/fi";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
 
-const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8000";
-
 function ChatBubble({
   role,
   text,
@@ -59,6 +57,7 @@ export default function App() {
   const [width, setWidth] = useState(512);
   const [height, setHeight] = useState(512);
   const containerRef = useRef(null);
+  const [API_BASE, setApiBase] = useState("http://localhost:8000");
 
   // Auto-scroll on new message
   useEffect(() => {
@@ -73,6 +72,15 @@ export default function App() {
   }
 
   async function sendPrompt() {
+    if (
+      API_BASE.trim() === "" ||
+      !API_BASE.startsWith("http") ||
+      API_BASE === null
+    ) {
+      alert("Please set a valid API Base URL.");
+      return;
+    }
+
     if (!prompt.trim()) return;
     const text = prompt.trim();
     addMessage({ role: "user", text });
@@ -175,6 +183,19 @@ export default function App() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white flex items-center justify-center p-6">
       <div className="w-full max-w-3xl bg-white shadow-lg rounded-2xl overflow-hidden border">
+        {/* Enhanced to allow API base URL configuration */}
+        <div className="px-6 py-4">
+          <label className="block text-sm font-medium mb-1">
+            API Base URL:
+          </label>
+          <input
+            type="text"
+            value={API_BASE}
+            onChange={(e) => setApiBase(e.target.value)}
+            className="w-full p-2 rounded-md border"
+            placeholder="http://localhost:8000"
+          />
+        </div>
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b">
           <div className="flex items-center gap-3">
