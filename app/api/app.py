@@ -67,3 +67,8 @@ def generate(req: GenRequest):
     img.save(buf, format="PNG")
     b64 = base64.b64encode(buf.getvalue()).decode("utf-8")
     return {"image_base64": b64, "size": f"{req.width}x{req.height}"}
+
+
+@app.get("/")
+def read_root():
+    return {"message": "Welcome to the Event Gen API. Use the /generate endpoint to create images."}
