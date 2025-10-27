@@ -33,3 +33,11 @@
 | Beingana Jim Junior | 2200705243     | 22/X/5243/PS        | [beingana.jim.junior@students.mak.ac.ug](mailto:beingana.jim.junior@students.mak.ac.ug) | Makerere University    |
 | Simon Peter Mujuni  | 1900708714     | 19/U/8714/EVE       | [simon.mujuni@students.mak.ac.ug](mailto:simon.mujuni@students.mak.ac.ug)               | Makerere University    |
 | Boonabaana Bronia   | 2300707647     | 23/U/07647/EVE      | [boonabaana.bronia@students.mac.ac.ug](mailto:boonabaana.bronia@students.mac.ac.ug)     | Makerere University    |
+
+## Running The Project
+
+This project can be run using docker. As long as the host machine has access to an Nvidia GPU.
+
+If there is no access to a GPU host machine, the group team has created a walkaround notebook that enables you to deploy the API in a Colab or Kaggle Notebook that has access to a GPU. Its in the `notebooks/deploy_api_walkaround.ipynb` file.
+
+Once you have the API running, head over to [https://event-gen.open.ug](https://event-gen.open.ug) and paste the URL endpoint you generated to access the API in the Chatbot UI, and then start prompting the Modal.
