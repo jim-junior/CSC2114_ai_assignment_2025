@@ -1,12 +1,25 @@
 FROM nvidia/cuda:13.0.1-cudnn-runtime-ubuntu24.04
 
-# Basic deps
-RUN apt-get update && apt-get install -y python3-pip git wget build-essential
+ENV DEBIAN_FRONTEND=noninteractive
 
-# Create app dir
+# install Python and venv + build deps
+RUN apt-get update && apt-get install -y \
+  python3 python3-venv python3-pip build-essential git wget ca-certificates \
+  && rm -rf /var/lib/apt/lists/*
+
+# Ensure `python` points to python3
+RUN ln -sf /usr/bin/python3 /usr/bin/python
+
 WORKDIR /app
 COPY requirements.txt /app/requirements.txt
-RUN pip3 install --no-cache-dir -r requirements.txt
+
+# create virtualenv, activate it and install requirements into it
+RUN python3 -m venv /opt/venv \
+  && /opt/venv/bin/pip install --upgrade pip \
+  && /opt/venv/bin/pip install --no-cache-dir -r /app/requirements.txt
+
+# make the venv first in PATH for subsequent commands
+ENV PATH="/opt/venv/bin:${PATH}"
 
 COPY app/api/app.py /app/app.py
 
