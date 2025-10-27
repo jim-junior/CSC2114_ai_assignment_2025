@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import React, { useState, useRef, useEffect } from "react";
 import axios from "axios";
 import { FiSend, FiImage, FiTrash2, FiDownload, FiPlus } from "react-icons/fi";
@@ -5,7 +8,15 @@ import { AiOutlineLoading3Quarters } from "react-icons/ai";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8000";
 
-function ChatBubble({ role, text, image }) {
+function ChatBubble({
+  role,
+  text,
+  image,
+}: {
+  role: string;
+  text?: string | null;
+  image?: string | null;
+}) {
   const isUser = role === "user";
   return (
     <div className={`flex ${isUser ? "justify-end" : "justify-start"} mb-4`}>
@@ -53,11 +64,12 @@ export default function App() {
   // Auto-scroll on new message
   useEffect(() => {
     if (containerRef.current) {
+      // @ts-ignore
       containerRef.current.scrollTop = containerRef.current.scrollHeight;
     }
   }, [messages, loading]);
 
-  function addMessage(msg) {
+  function addMessage(msg: any) {
     setMessages((m) => [...m, { ...msg, id: Date.now() }]);
   }
 
@@ -99,9 +111,9 @@ export default function App() {
       }
 
       // remove the last placeholder bot message
-      setMessages((prev) => {
+      setMessages((prev: any) => {
         const withoutPlaceholder = prev.filter(
-          (m) => !(m.role === "bot" && m._meta && m._meta.placeholder)
+          (m: any) => !(m.role === "bot" && m._meta && m._meta.placeholder)
         );
         return [
           ...withoutPlaceholder,
@@ -119,15 +131,16 @@ export default function App() {
       });
     } catch (err) {
       console.error(err);
-      setMessages((prev) => {
+      setMessages((prev: any) => {
         const withoutPlaceholder = prev.filter(
-          (m) => !(m.role === "bot" && m._meta && m._meta.placeholder)
+          (m: any) => !(m.role === "bot" && m._meta && m._meta.placeholder)
         );
         return [
           ...withoutPlaceholder,
           {
             role: "bot",
             text: `Error: ${
+              // @ts-ignore
               err?.response?.data?.detail || err.message || "Request failed"
             }`,
           },
@@ -144,14 +157,14 @@ export default function App() {
     ]);
   }
 
-  function handleKey(e) {
+  function handleKey(e: any) {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       sendPrompt();
     }
   }
 
-  function downloadImage(base64) {
+  function downloadImage(base64: string) {
     const link = document.createElement("a");
     link.href = base64;
     link.download = `sd-${Date.now()}.png`;
@@ -196,6 +209,7 @@ export default function App() {
                   key={msg.id}
                   role={msg.role}
                   text={msg.text}
+                  // @ts-ignore
                   image={msg.image}
                 />
               ))}
@@ -302,7 +316,8 @@ export default function App() {
                     const last = messages
                       .slice()
                       .reverse()
-                      .find((m) => m.image);
+                      .find((m: any) => m.image);
+                    // @ts-ignore
                     if (last?.image) downloadImage(last.image);
                   }}
                 >
@@ -315,7 +330,8 @@ export default function App() {
                     const last = messages
                       .slice()
                       .reverse()
-                      .find((m) => m.image);
+                      .find((m: any) => m.image);
+                    // @ts-ignore
                     if (last?.image) navigator.clipboard.writeText(last.image);
                   }}
                   title="Copy image data URL"
