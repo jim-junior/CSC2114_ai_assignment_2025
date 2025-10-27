@@ -50,16 +50,11 @@ def generate(req: GenRequest):
     global pipe
     if pipe is None:
         raise HTTPException(status_code=503, detail="Model not loaded yet")
-    generator = torch.Generator(device).manual_seed(
-        req.seed) if req.seed is not None else None
 
     img = pipe(
         req.prompt,
         num_inference_steps=req.steps,
-        guidance_scale=req.guidance_scale,
-        generator=generator,
-        height=req.height,
-        width=req.width,
+        guidance_scale=req.guidance_scale
     ).images[0]
 
     # encode to base64 and return (or save to disk / S3 and return URL)
