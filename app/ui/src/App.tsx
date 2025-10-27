@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import React, { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import axios from "axios";
-import { FiSend, FiImage, FiTrash2, FiDownload, FiPlus } from "react-icons/fi";
+import { FiSend, FiTrash2, FiDownload, FiPlus } from "react-icons/fi";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8000";
@@ -54,11 +54,10 @@ export default function App() {
     ];
   });
   const [loading, setLoading] = useState(false);
-  const [steps, setSteps] = useState(28);
-  const [guidance, setGuidance] = useState(7.5);
+  const [steps, setSteps] = useState(10);
+  const [guidance, setGuidance] = useState(2);
   const [width, setWidth] = useState(512);
   const [height, setHeight] = useState(512);
-  const fileDownloadRef = useRef(null);
   const containerRef = useRef(null);
 
   // Auto-scroll on new message
@@ -183,9 +182,9 @@ export default function App() {
               AI
             </div>
             <div>
-              <div className="text-lg font-semibold">Stable Diffusion Chat</div>
+              <div className="text-lg font-semibold">Event Gen AI</div>
               <div className="text-xs text-gray-500">
-                Generate images from prompts — demo UI
+                Generate events images from prompts
               </div>
             </div>
           </div>
@@ -221,7 +220,7 @@ export default function App() {
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
                   onKeyDown={handleKey}
-                  placeholder="Type a prompt... e.g. 'a joyful corgi in a spacesuit, cinematic lighting'"
+                  placeholder="Type a prompt... e.g. 'A keynote speaker presenting in a conference hall'"
                   className="flex-1 min-h-[48px] max-h-36 resize-none p-3 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-300"
                 />
                 <div className="flex flex-col gap-2">
@@ -342,8 +341,17 @@ export default function App() {
             </div>
 
             <div className="mt-6 text-xs text-gray-500">
-              This is a demo UI for generating images. Keep an eye on backend
-              costs and moderation.
+              This Project was created by Group SW-AI-46 for CSC2114 AI
+              Assignment. Copyright © 2025. Beingana Jim Junior, Simon Peter
+              Mujuni, Boonabaana Bronia. Code is open-source on{" "}
+              <a
+                href="https://github.com/jim-junior/CSC2114_ai_assignment_2025"
+                target="_blank"
+                className="text-blue-600 underline"
+              >
+                GitHub
+              </a>
+              .
             </div>
           </div>
         </div>
