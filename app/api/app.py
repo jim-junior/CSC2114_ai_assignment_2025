@@ -15,10 +15,10 @@ app = FastAPI(title="Event Gen API")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],       # ✅ allow all origins
-    allow_credentials=False,   # must be False when allow_origins=["*"]
-    allow_methods=["*"],       # allow all HTTP methods
-    allow_headers=["*"],       # allow all headers
+    allow_origins=["*"],
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # Load pipeline once at startup
@@ -29,16 +29,16 @@ pipe = None
 @app.on_event("startup")
 def load_model():
     global pipe
-    # Use `torch_dtype=torch.float16` if GPU supports it
+
     pipe = StableDiffusionPipeline.from_pretrained(
         MODEL_PATH,
         torch_dtype=torch.float16 if device == "cuda" else torch.float32,
-        safety_checker=None,  # consider hooking moderation instead
+        safety_checker=None,
     )
     pipe.to(device)
-    # Optionally enable attention slicing
+
     pipe.enable_attention_slicing()
-    # Optionally enable xformers (if installed)
+
     try:
         pipe.enable_xformers_memory_efficient_attention()
     except Exception:
