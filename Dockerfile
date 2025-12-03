@@ -7,6 +7,15 @@ RUN apt-get update && apt-get install -y \
   python3 python3-venv python3-pip build-essential git wget ca-certificates \
   && rm -rf /var/lib/apt/lists/*
 
+# Add ngrok apt repo and key (modern signed-by pattern)
+RUN curl -sSL https://ngrok-agent.s3.amazonaws.com/ngrok.asc \
+  -o /usr/share/keyrings/ngrok-archive-keyring.gpg \
+  && chmod 644 /usr/share/keyrings/ngrok-archive-keyring.gpg \
+  && echo "deb [signed-by=/usr/share/keyrings/ngrok-archive-keyring.gpg] https://ngrok-agent.s3.amazonaws.com bookworm main" \
+     > /etc/apt/sources.list.d/ngrok.list \
+  && apt-get update \
+  && apt-get install -y ngrok \
+  && rm -rf /var/lib/apt/lists/*
 # Ensure `python` points to python3
 RUN ln -sf /usr/bin/python3 /usr/bin/python
 
@@ -22,9 +31,14 @@ RUN python3 -m venv /opt/venv \
 ENV PATH="/opt/venv/bin:${PATH}"
 
 COPY app/api/app.py /app/app.py
+COPY start.sh /app/start.sh
+RUN chmod +x /app/start.sh
 
 
 ENV MODEL_PATH=jimjunior/event-diffusion-model
+ENV NGROK_AUTHTOKEN=""
+ENV NGROK_PORT="80"
+
 EXPOSE 80
 
-CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "80"]
+CMD ["/app/start.sh"]
