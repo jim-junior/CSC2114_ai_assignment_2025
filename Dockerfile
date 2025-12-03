@@ -4,18 +4,19 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 # install Python and venv + build deps
 RUN apt-get update && apt-get install -y \
-  python3 python3-venv python3-pip build-essential git wget ca-certificates curl gnupg wget unzip \
-  && rm -rf /var/lib/apt/lists/*
+  python3 python3-venv python3-pip build-essential git wget ca-certificates curl gnupg wget unzip
 
 # Add ngrok apt repo and key (modern signed-by pattern)
 RUN curl -sSL https://ngrok-agent.s3.amazonaws.com/ngrok.asc \
-  -o /usr/share/keyrings/ngrok-archive-keyring.gpg \
-  && chmod 644 /usr/share/keyrings/ngrok-archive-keyring.gpg \
-  && echo "deb [signed-by=/usr/share/keyrings/ngrok-archive-keyring.gpg] https://ngrok-agent.s3.amazonaws.com bookworm main" \
-     > /etc/apt/sources.list.d/ngrok.list \
-  && apt-get update \
-  && apt-get install -y ngrok \
-  && rm -rf /var/lib/apt/lists/*
+  | tee /etc/apt/trusted.gpg.d/ngrok.asc >/dev/null \
+  && echo "deb https://ngrok-agent.s3.amazonaws.com bookworm main" \
+  | tee /etc/apt/sources.list.d/ngrok.list \
+  && apt update \
+  && apt install ngrok
+
+RUN rm -rf /var/lib/apt/lists/*
+
+
 # Ensure `python` points to python3
 RUN ln -sf /usr/bin/python3 /usr/bin/python
 
