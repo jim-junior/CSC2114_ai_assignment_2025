@@ -4,7 +4,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 # install Python and venv + build deps
 RUN apt-get update && apt-get install -y \
-  python3 python3-venv python3-pip build-essential git wget ca-certificates \
+  python3 python3-venv python3-pip build-essential git wget ca-certificates curl gnupg wget unzip \
   && rm -rf /var/lib/apt/lists/*
 
 # Add ngrok apt repo and key (modern signed-by pattern)
