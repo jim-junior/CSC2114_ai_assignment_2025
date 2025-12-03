@@ -57,7 +57,9 @@ export default function App() {
   const [width, setWidth] = useState(512);
   const [height, setHeight] = useState(512);
   const containerRef = useRef(null);
-  const [API_BASE, setApiBase] = useState("http://localhost:8000");
+  const [API_BASE, setApiBase] = useState(
+    "https://5fb42379abfb.ngrok-free.app"
+  );
 
   // Auto-scroll on new message
   useEffect(() => {
