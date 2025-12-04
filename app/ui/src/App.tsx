@@ -105,7 +105,7 @@ export default function App() {
       };
 
       const res = await axios.post(`${API_BASE}/generate`, payload, {
-        timeout: 120000,
+        timeout: 0,
       });
 
       // normalize response
